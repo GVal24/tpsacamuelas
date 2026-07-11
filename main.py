@@ -1,7 +1,7 @@
 import tkinter as tk
-from formulariOdontologico import formularioOdontologico
+from formulario_odontologico import FormularioOdontologico
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = formularioOdontologico(root)
+    app = FormularioOdontologico(root)
     root.mainloop()
