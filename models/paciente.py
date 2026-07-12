@@ -43,7 +43,8 @@ class Paciente:
         """Busca un paciente por su DNI y retorna una instancia de la clase Paciente o None."""
         sql = "SELECT id, dni, nombre, apellido, telefono FROM pacientes WHERE dni=?"
         resultado = db.ejecutarConsulta(sql, (dni,))
+        
         if resultado:
-            fila = resultado[0]
+            fila = resultado[0] 
             return Paciente(id=fila[0], dni=fila[1], nombre=fila[2], apellido=fila[3], telefono=fila[4])
         return None

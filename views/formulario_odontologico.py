@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-
-# Importamos las clases de negocio individuales
+from tkcalendar import Calendar
 from models.paciente import Paciente
 from models.tratamiento import Tratamiento
 from models.turno import Turno
@@ -12,7 +11,7 @@ class FormularioOdontologico(tk.Tk):
         self.title("Consultorio Odontológico - Panel de Control")
         self.geometry("750x520")
 
-        # Estructura del panel mediante pestañas (Notebook)
+        # Notebook con pestañas
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill="both", expand=True, padx=10, pady=10)
 
@@ -24,38 +23,37 @@ class FormularioOdontologico(tk.Tk):
         self.notebook.add(self.pestana_turnos, text="Turnos")
         self.notebook.add(self.pestana_tratamientos, text="Tratamientos")
 
-        # Construcción de las interfaces individuales
+        # Construcción de interfaces
         self._inicializar_modulo_pacientes()
         self._inicializar_modulo_turnos()
         self._inicializar_modulo_tratamientos()
 
-    # --- MÓDULO PACIENTES ---
+    # --- PACIENTES ---
     def _inicializar_modulo_pacientes(self):
         frame = self.pestana_pacientes
-        
-        ttk.Label(frame, text="DNI:").grid(row=0, column=0, padx=10, pady=10, sticky="w")
-        self.txtDni = ttk.Entry(frame)
-        self.txtDni.grid(row=0, column=1, padx=10, pady=10)
-        
+        frame.grid_columnconfigure(0, weight=1)
+        frame.grid_columnconfigure(1, weight=1)
+        frame.grid_columnconfigure(2, weight=1)
+
+        ttk.Label(frame, text="DNI:").grid(row=0, column=0, padx=10, pady=10, sticky="e")
+        self.txtDni = ttk.Entry(frame, justify="center")
+        self.txtDni.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
         ttk.Button(frame, text="Buscar", command=self.buscarPaciente).grid(row=0, column=2, padx=10, pady=10)
 
-        ttk.Label(frame, text="Nombre:").grid(row=1, column=0, padx=10, pady=10, sticky="w")
-        self.txtNombre = ttk.Entry(frame)
-        self.txtNombre.grid(row=1, column=1, padx=10, pady=10)
+        ttk.Label(frame, text="Nombre:").grid(row=1, column=0, padx=10, pady=10, sticky="e")
+        self.txtNombre = ttk.Entry(frame, justify="center")
+        self.txtNombre.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
 
-        # Modificado para coincidir con tu diagrama de clases (txtApellido y txtTelefono)
-        ttk.Label(frame, text="Apellido:").grid(row=2, column=0, padx=10, pady=10, sticky="w")
-        self.txtApellido = ttk.Entry(frame)
-        self.txtApellido.grid(row=2, column=1, padx=10, pady=10)
+        ttk.Label(frame, text="Apellido:").grid(row=2, column=0, padx=10, pady=10, sticky="e")
+        self.txtApellido = ttk.Entry(frame, justify="center")
+        self.txtApellido.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
 
-        ttk.Label(frame, text="Teléfono:").grid(row=3, column=0, padx=10, pady=10, sticky="w")
-        self.txtTelefono = ttk.Entry(frame)
-        self.txtTelefono.grid(row=3, column=1, padx=10, pady=10)
+        ttk.Label(frame, text="Teléfono:").grid(row=3, column=0, padx=10, pady=10, sticky="e")
+        self.txtTelefono = ttk.Entry(frame, justify="center")
+        self.txtTelefono.grid(row=3, column=1, padx=10, pady=10, sticky="ew")
 
-        # Contenedor para acciones organizadas
         f_botones = ttk.Frame(frame)
         f_botones.grid(row=4, column=0, columnspan=3, pady=20)
-        
         ttk.Button(f_botones, text="Guardar", command=self.registrarPaciente).pack(side="left", padx=5)
         ttk.Button(f_botones, text="Modificar", command=self.modificarPaciente).pack(side="left", padx=5)
         ttk.Button(f_botones, text="Eliminar", command=self.eliminarPaciente).pack(side="left", padx=5)
@@ -87,12 +85,9 @@ class FormularioOdontologico(tk.Tk):
     def buscarPaciente(self):
         p = Paciente.buscarPorDni(self.txtDni.get())
         if p:
-            self.txtNombre.delete(0, tk.END)
-            self.txtNombre.insert(0, p.nombre)
-            self.txtApellido.delete(0, tk.END)
-            self.txtApellido.insert(0, p.apellido)
-            self.txtTelefono.delete(0, tk.END)
-            self.txtTelefono.insert(0, p.telefono)
+            self.txtNombre.delete(0, tk.END); self.txtNombre.insert(0, p.nombre)
+            self.txtApellido.delete(0, tk.END); self.txtApellido.insert(0, p.apellido)
+            self.txtTelefono.delete(0, tk.END); self.txtTelefono.insert(0, p.telefono)
         else:
             messagebox.showwarning("Atención", "No se encontró ningún paciente asociado a ese DNI.")
 
@@ -102,41 +97,45 @@ class FormularioOdontologico(tk.Tk):
         self.txtApellido.delete(0, tk.END)
         self.txtTelefono.delete(0, tk.END)
 
-    # --- MÓDULO TURNOS ---
+    # --- TURNOS ---
     def _inicializar_modulo_turnos(self):
         frame = self.pestana_turnos
+        frame.grid_columnconfigure(0, weight=1)
+        frame.grid_columnconfigure(1, weight=1)
+        frame.grid_columnconfigure(2, weight=1)
 
-        ttk.Label(frame, text="Fecha (AAAA-MM-DD):").grid(row=0, column=0, padx=10, pady=5, sticky="w")
-        self.txtFecha = ttk.Entry(frame)
-        self.txtFecha.grid(row=0, column=1, padx=10, pady=5)
+        ttk.Label(frame, text="Fecha:").grid(row=0, column=0, padx=10, pady=5, sticky="e")
+        self.calendario = Calendar(frame, selectmode="day", date_pattern="yyyy-mm-dd")
+        self.calendario.grid(row=0, column=1, padx=10, pady=5, sticky="ew")
 
-        ttk.Label(frame, text="Hora (HH:MM):").grid(row=1, column=0, padx=10, pady=5, sticky="w")
-        self.txtHora = ttk.Entry(frame)
-        self.txtHora.grid(row=1, column=1, padx=10, pady=5)
+        ttk.Label(frame, text="Hora (HH:MM):").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+        self.txtHora = ttk.Entry(frame, justify="center")
+        self.txtHora.grid(row=1, column=1, padx=10, pady=5, sticky="ew")
 
-        ttk.Label(frame, text="DNI Paciente:").grid(row=2, column=0, padx=10, pady=5, sticky="w")
-        self.txtTurnoDni = ttk.Entry(frame)
-        self.txtTurnoDni.grid(row=2, column=1, padx=10, pady=5)
+        ttk.Label(frame, text="DNI Paciente:").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+        self.txtTurnoDni = ttk.Entry(frame, justify="center")
+        self.txtTurnoDni.grid(row=2, column=1, padx=10, pady=5, sticky="ew")
 
-        ttk.Label(frame, text="Tratamiento:").grid(row=3, column=0, padx=10, pady=5, sticky="w")
-        self.cboTratamientos = ttk.Combobox(frame, state="readonly")
-        self.cboTratamientos.grid(row=3, column=1, padx=10, pady=5)
+        ttk.Label(frame, text="Tratamiento:").grid(row=3, column=0, padx=10, pady=5, sticky="e")
+        self.cboTratamientos = ttk.Combobox(frame, state="readonly", justify="center")
+        self.cboTratamientos.grid(row=3, column=1, padx=10, pady=5, sticky="ew")
 
         ttk.Button(frame, text="Agendar Turno", command=self.agendarTurno).grid(row=4, column=0, columnspan=2, pady=10)
         ttk.Button(frame, text="Consultar Agenda", command=self.consultarAgendaDiaria).grid(row=0, column=2, padx=10)
 
-        # Lista visual estructurada (Treeview)
         self.tabla_turnos = ttk.Treeview(frame, columns=("ID", "Hora", "Paciente", "Tratamiento"), show="headings", height=7)
         self.tabla_turnos.heading("ID", text="ID")
         self.tabla_turnos.heading("Hora", text="Hora")
         self.tabla_turnos.heading("Paciente", text="Paciente")
         self.tabla_turnos.heading("Tratamiento", text="Tratamiento")
-        self.tabla_turnos.column("ID", width=50)
+        self.tabla_turnos.column("ID", width=50, anchor="center")
+        self.tabla_turnos.column("Hora", anchor="center")
+        self.tabla_turnos.column("Paciente", anchor="center")
+        self.tabla_turnos.column("Tratamiento", anchor="center")
         self.tabla_turnos.grid(row=5, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
 
         ttk.Button(frame, text="Cancelar Turno Seleccionado", command=self.cancelarTurno).grid(row=6, column=0, columnspan=3, pady=5)
 
-        # Enlace para recargar los tratamientos disponibles en el menú desplegable al cambiar de pestaña
         self.notebook.bind("<<NotebookTabChanged>>", lambda e: self._cargar_desplegable_tratamientos())
 
     def _cargar_desplegable_tratamientos(self):
@@ -144,9 +143,13 @@ class FormularioOdontologico(tk.Tk):
         self.cboTratamientos['values'] = [t.nombre for t in self.lista_cache_tratamientos]
 
     def agendarTurno(self):
+        # 1. Buscamos el paciente usando el DNI
         paciente = Paciente.buscarPorDni(self.txtTurnoDni.get())
+        
+        # 2. Obtenemos la posición elegida en el combobox de tratamientos
         seleccion = self.cboTratamientos.current()
 
+        # Validaciones de seguridad
         if not paciente:
             messagebox.showerror("Error", "Primero debe dar de alta al paciente con ese DNI.")
             return
@@ -154,22 +157,36 @@ class FormularioOdontologico(tk.Tk):
             messagebox.showerror("Error", "Debe seleccionar un tratamiento de la lista.")
             return
 
+        # 3. Traemos el objeto del tratamiento de la lista que guardaste en caché
         tratamiento_seleccionado = self.lista_cache_tratamientos[seleccion]
-        t = Turno(self.txtFecha.get(), self.txtHora.get(), paciente.id, tratamiento_seleccionado.id)
         
+        # --- CORRECCIÓN CLAVE AQUÍ ---
+        # Le pedimos la fecha directamente a tu objeto 'calendario' usando get_date()
+        fecha_turno = self.calendario.get_date() 
+        hora_turno = self.txtHora.get()
+        
+        # 4. Instanciamos la clase Turno respetando tu diagrama
+        t = Turno(fecha_turno, hora_turno, paciente.id, tratamiento_seleccionado.id)
+        
+        # 5. Guardamos en SQLite y refrescamos la grilla
         if t.agendar():
             messagebox.showinfo("Éxito", "Turno cargado correctamente.")
-            self.consultarAgendaDiaria()
+            self.consultarAgendaDiaria()  # Llama a tu función para recargar la tabla
         else:
-            messagebox.showerror("Error", "No se pudo agendar el turno.")
+            messagebox.showerror("Error", "No se pudo agendar el turno en la base de datos.")
+
 
     def consultarAgendaDiaria(self):
         for elemento in self.tabla_turnos.get_children():
             self.tabla_turnos.delete(elemento)
 
-        turnos = Turno.obtainAgendaDiaria(self.txtFecha.get()) if hasattr(Turno, 'obtainAgendaDiaria') else Turno.obtenerAgendaDiaria(self.txtFecha.get())
+        turnos = Turno.obtenerAgendaDiaria(self.calendario.get_date())
+        if not turnos:
+            messagebox.showinfo("Agenda", f"No hay turnos reservados para {self.calendario.get_date()}")
+            return
+
         for fila in turnos:
-            # Estructura del SELECT: (id, fecha, hora, nombre_paciente, nombre_tratamiento)
+            # SELECT devuelve: (id, fecha, hora, nombre_paciente, nombre_tratamiento)
             self.tabla_turnos.insert("", "end", values=(fila[0], fila[2], fila[3], fila[4]))
 
     def cancelarTurno(self):
@@ -188,22 +205,24 @@ class FormularioOdontologico(tk.Tk):
         else:
             messagebox.showerror("Error", "No se pudo procesar la cancelación.")
 
-    # --- MÓDULO TRATAMIENTOS (gestionarTratamientos) ---
+    # --- TRATAMIENTOS ---
     def _inicializar_modulo_tratamientos(self):
         frame = self.pestana_tratamientos
+        for i in range(2):
+            frame.grid_columnconfigure(i, weight=1)
 
-        ttk.Label(frame, text="Nombre del Tratamiento:").grid(row=0, column=0, padx=10, pady=10, sticky="w")
-        self.txtTratNombre = ttk.Entry(frame)
-        self.txtTratNombre.grid(row=0, column=1, padx=10, pady=10)
+        ttk.Label(frame, text="Nombre del Tratamiento:").grid(row=0, column=0, padx=10, pady=10, sticky="e")
+        self.txtTratNombre = ttk.Entry(frame, justify="center")
+        self.txtTratNombre.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
 
-        ttk.Label(frame, text="Precio ($):").grid(row=1, column=0, padx=10, pady=10, sticky="w")
-        self.txtTratPrecio = ttk.Entry(frame)
-        self.txtTratPrecio.grid(row=1, column=1, padx=10, pady=10)
+        ttk.Label(frame, text="Precio ($):").grid(row=1, column=0, padx=10, pady=10, sticky="e")
+        self.txtTratPrecio = ttk.Entry(frame, justify="center")
+        self.txtTratPrecio.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
 
         ttk.Button(frame, text="Agregar Tratamiento", command=self.gestionarTratamientos).grid(row=2, column=0, columnspan=2, pady=10)
 
     def gestionarTratamientos(self):
-        """Maneja el alta de nuevos tratamientos validando el tipo de dato."""
+        """Alta de nuevos tratamientos validando el tipo de dato."""
         try:
             nombre = self.txtTratNombre.get()
             precio = float(self.txtTratPrecio.get())
