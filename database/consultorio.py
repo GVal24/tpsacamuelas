@@ -6,7 +6,7 @@ class Consultorio:
         self.crearTablas()
 
     def connect(self):
-        """Establece y retorna la conexión física con la base de datos SQLite."""
+        """Establece y retorna la conexión con la base de SQLite."""
         return sqlite3.connect(self.db_name)
 
     def crearTablas(self):
@@ -49,7 +49,7 @@ class Consultorio:
             connection.close()
 
     def ejecutarConsulta(self, query, parametros=()):
-        """Ejecuta cualquier sentencia SQL centralizando el manejo de la conexión."""
+        """Ejecuta cualquier sentencia SQL."""
         connection = self.connect()
         cursor = connection.cursor()
         resultado = None

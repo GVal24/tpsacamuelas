@@ -157,21 +157,21 @@ class FormularioOdontologico(tk.Tk):
             messagebox.showerror("Error", "Debe seleccionar un tratamiento de la lista.")
             return
 
-        # 3. Traemos el objeto del tratamiento de la lista que guardaste en caché
+        # 3. Traemos el objeto del tratamiento de la lista guardada
         tratamiento_seleccionado = self.lista_cache_tratamientos[seleccion]
         
-        # --- CORRECCIÓN CLAVE AQUÍ ---
-        # Le pedimos la fecha directamente a tu objeto 'calendario' usando get_date()
+
+        # Pedimos la fecha al objeto 'calendario'
         fecha_turno = self.calendario.get_date() 
         hora_turno = self.txtHora.get()
         
-        # 4. Instanciamos la clase Turno respetando tu diagrama
+        # 4. Instanciamos la clase Turno 
         t = Turno(fecha_turno, hora_turno, paciente.id, tratamiento_seleccionado.id)
         
         # 5. Guardamos en SQLite y refrescamos la grilla
         if t.agendar():
             messagebox.showinfo("Éxito", "Turno cargado correctamente.")
-            self.consultarAgendaDiaria()  # Llama a tu función para recargar la tabla
+            self.consultarAgendaDiaria() 
         else:
             messagebox.showerror("Error", "No se pudo agendar el turno en la base de datos.")
 

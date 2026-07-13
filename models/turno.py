@@ -12,9 +12,9 @@ class Turno:
         self.tratamiento_id = tratamiento_id
 
     def agendar(self) -> bool:
-        """Registra un nuevo turno asociado a un paciente y tratamiento, con validaciones."""
+        """Registra un nuevo turno asociado a un paciente y tratamiento."""
         try:
-            # Validar formato de fecha y hora
+            # Validación de formato de fecha y hora
             try:
                 fecha_dt = datetime.strptime(self.fecha, "%Y-%m-%d")
                 hora_dt = datetime.strptime(self.hora, "%H:%M")
@@ -26,12 +26,10 @@ class Turno:
             if fecha_dt.date() < hoy.date():
                 raise ValueError("No se pueden agendar turnos en fechas pasadas.")
 
-            # --- CORRECCIÓN ACÁ ---
-            # Validar superposición de turnos (misma fecha y hora)
+            
+            # Validar superposición de turnos
             sql_check = "SELECT id FROM turnos WHERE fecha=? AND hora=?"
             resultado_check = db.ejecutarConsulta(sql_check, (self.fecha, self.hora))
-            
-            # Si la lista tiene elementos, significa que el turno ya está ocupado
             if resultado_check:  
                 raise ValueError("Ya existe un turno en esa fecha y hora.")
 
@@ -57,7 +55,7 @@ class Turno:
 
     @staticmethod
     def obtenerAgendaDiaria(fecha) -> list:
-        """Trae los turnos de una fecha específica uniendo información de pacientes y tratamientos."""
+        """Trae los turnos de una fecha específica."""
         sql = """
             SELECT t.id, t.fecha, t.hora, p.nombre || ' ' || p.apellido, tr.nombre
             FROM turnos t
