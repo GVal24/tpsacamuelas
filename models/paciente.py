@@ -21,12 +21,13 @@ class Paciente:
             return False
 
     def modificar(self) -> bool:
-        """Actualiza los datos del paciente usando el DNI como identificador."""
+        """Actualiza los datos del paciente usando el ID como identificador."""
         try:
-            sql = "UPDATE pacientes SET nombre=?, apellido=?, telefono=? WHERE dni=?"
-            db.ejecutarConsulta(sql, (self.nombre, self.apellido, self.telefono, self.dni))
+            sql = "UPDATE pacientes SET dni=?, nombre=?, apellido=?, telefono=? WHERE id=?"
+            db.ejecutarConsulta(sql, (self.dni, self.nombre, self.apellido, self.telefono, self.id))
             return True
-        except Exception:
+        except Exception as e:
+            print("Error al modificar paciente:", e)
             return False
 
     def eliminar(self) -> bool:
