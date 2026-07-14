@@ -9,7 +9,8 @@ El sistema cumple con los lineamientos del **Hito 2 (Implementación)** para la 
 ## 📌 Características Principales
 
 * **Agenda Diaria Automatizada:** Consulta interactiva de turnos diarios vinculada directamente a la selección de fechas en un calendario interactivo.
-* **Gestión Integral (CRUD):** * **Pacientes:** Registro, modificación, consulta y eliminación de fichas personales.
+* **Gestión Integral (CRUD):**
+  * **Pacientes:** Registro, modificación, consulta y eliminación de fichas personales.
   * **Turnos:** Agendamiento, reprogramación y cancelación de citas en tiempo real.
   * **Tratamientos:** Catálogo de prestaciones ofrecidas en el consultorio.
 * **Persistencia Local Segura:** Almacenamiento y persistencia local de datos utilizando **SQLite**, eliminando dependencias de conexión a Internet.
@@ -37,7 +38,7 @@ El sistema sigue un enfoque de **separación estricta de capas** (interfaz, lóg
 
 * **Sistema Operativo:** Windows 10 u 11, macOS o Linux.
 * **Procesador:** Cualquier procesador moderno.
-* **Memoria RAM:** 2 GB de RAM libres (aplicación sumamente ligera).
+* **Memoria RAM:** 2 GB de RAM libres.
 * **Python:** v3.8 o superior instalado.
 
 ---
