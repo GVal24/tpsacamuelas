@@ -11,6 +11,11 @@ class Tratamiento:
     def insertar(self) -> bool:
         """Registra un nuevo tipo de tratamiento."""
         try:
+            sql_check = "SELECT COUNT(*) FROM tratamientos WHERE nombre=?"
+            resultado = db.ejecutarConsulta(sql_check, (self.nombre,))
+            if resultado and resultado[0][0] > 0:
+                return False
+            
             sql = "INSERT INTO tratamientos (nombre, precio) VALUES (?, ?)"
             db.ejecutarConsulta(sql, (self.nombre, self.precio))
             return True
@@ -37,11 +42,7 @@ class Tratamiento:
 
     @staticmethod
     def obtenerTodos() -> list:
-        """Retorna una lista de objetos Tratamiento con todos los registros de la tabla."""
-        sql = "SELECT id, nombre, precio FROM tratamientos"
+        """Retorna una lista de tuplas con todos los tratamientos (id, nombre, precio)."""
+        sql = "SELECT id, nombre, precio FROM tratamientos ORDER BY nombre ASC"
         resultados = db.ejecutarConsulta(sql)
-        lista_tratamientos = []
-        if resultados:
-            for fila in resultados:
-                lista_tratamientos.append(Tratamiento(id=fila[0], nombre=fila[1], precio=fila[2]))
-        return lista_tratamientos
+        return resultados

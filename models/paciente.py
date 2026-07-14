@@ -48,3 +48,10 @@ class Paciente:
             fila = resultado[0] 
             return Paciente(id=fila[0], dni=fila[1], nombre=fila[2], apellido=fila[3], telefono=fila[4])
         return None
+    
+    @staticmethod
+    def obtenerTodos() -> list:
+        """Retorna una lista de tuplas con todos los pacientes."""
+        sql = "SELECT id, dni, nombre, apellido, telefono FROM pacientes ORDER BY apellido ASC"
+        resultados = db.ejecutarConsulta(sql)
+        return resultados

@@ -28,7 +28,7 @@ class Consultorio:
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS tratamientos (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    nombre TEXT NOT NULL,
+                    nombre TEXT UNIQUE NOT NULL,
                     precio REAL NOT NULL
                 )
             """)

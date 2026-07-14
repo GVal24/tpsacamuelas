@@ -1,9 +1,13 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from tkcalendar import Calendar
+from datetime import datetime
 from models.paciente import Paciente
 from models.tratamiento import Tratamiento
 from models.turno import Turno
+from database.consultorio import Consultorio
+db = Consultorio()
+
 
 class FormularioOdontologico(tk.Tk):
     def __init__(self):
@@ -58,6 +62,20 @@ class FormularioOdontologico(tk.Tk):
         ttk.Button(f_botones, text="Modificar", command=self.modificarPaciente).pack(side="left", padx=5)
         ttk.Button(f_botones, text="Eliminar", command=self.eliminarPaciente).pack(side="left", padx=5)
 
+        # --- Tabla de pacientes ---
+        self.tabla_pacientes = ttk.Treeview(
+            frame, 
+            columns=("ID", "DNI", "Nombre", "Apellido", "Teléfono"), 
+            show="headings", 
+            height=7)
+        
+        for col in ("ID", "DNI", "Nombre", "Apellido", "Teléfono"):
+            self.tabla_pacientes.heading(col, text=col)
+            self.tabla_pacientes.column(col, anchor="center", width=100)
+        self.tabla_pacientes.grid(row=5, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+
+        ttk.Button(frame, text="Ver todos los pacientes", command=self.mostrarPacientes).grid(row=6, column=0, columnspan=3, pady=5)
+
     def registrarPaciente(self):
         p = Paciente(self.txtDni.get(), self.txtNombre.get(), self.txtApellido.get(), self.txtTelefono.get())
         if p.guardar():
@@ -96,8 +114,21 @@ class FormularioOdontologico(tk.Tk):
         self.txtNombre.delete(0, tk.END)
         self.txtApellido.delete(0, tk.END)
         self.txtTelefono.delete(0, tk.END)
+    
+    def mostrarPacientes(self):
+        for elemento in self.tabla_pacientes.get_children():
+            self.tabla_pacientes.delete(elemento)
 
-    # --- TURNOS ---
+        pacientes = Paciente.obtenerTodos()
+        if not pacientes:
+            messagebox.showinfo("Pacientes", "No hay pacientes registrados.")
+            return
+
+        for fila in pacientes:
+            self.tabla_pacientes.insert("", "end", values=fila)
+
+
+        # --- TURNOS ---
     def _inicializar_modulo_turnos(self):
         frame = self.pestana_turnos
         frame.grid_columnconfigure(0, weight=1)
@@ -120,36 +151,69 @@ class FormularioOdontologico(tk.Tk):
         self.cboTratamientos = ttk.Combobox(frame, state="readonly", justify="center")
         self.cboTratamientos.grid(row=3, column=1, padx=10, pady=5, sticky="ew")
 
-        ttk.Button(frame, text="Agendar Turno", command=self.agendarTurno).grid(row=4, column=0, columnspan=2, pady=10)
+        # --- Botones CRUD ---
+        f_botones = ttk.Frame(frame)
+        f_botones.grid(row=4, column=0, columnspan=2, pady=10)
+
+        ttk.Button(f_botones, text="Agendar", command=self.agendarTurno).pack(side="left", padx=5)
+        ttk.Button(f_botones, text="Modificar", command=self.modificarTurno).pack(side="left", padx=5)
+        ttk.Button(f_botones, text="Eliminar", command=self.eliminarTurno).pack(side="left", padx=5)
+
         ttk.Button(frame, text="Consultar Agenda", command=self.consultarAgendaDiaria).grid(row=0, column=2, padx=10)
 
-        self.tabla_turnos = ttk.Treeview(frame, columns=("ID", "Hora", "Paciente", "Tratamiento"), show="headings", height=7)
+        # --- Tabla de turnos ---
+        self.tabla_turnos = ttk.Treeview(frame, columns=("ID", "Hora", "DNI", "Paciente", "Tratamiento"), show="headings", height=7)
         self.tabla_turnos.heading("ID", text="ID")
         self.tabla_turnos.heading("Hora", text="Hora")
+        self.tabla_turnos.heading("DNI", text="DNI")
         self.tabla_turnos.heading("Paciente", text="Paciente")
         self.tabla_turnos.heading("Tratamiento", text="Tratamiento")
         self.tabla_turnos.column("ID", width=50, anchor="center")
-        self.tabla_turnos.column("Hora", anchor="center")
-        self.tabla_turnos.column("Paciente", anchor="center")
-        self.tabla_turnos.column("Tratamiento", anchor="center")
+        self.tabla_turnos.column("Hora", width=70, anchor="center")
+        self.tabla_turnos.column("DNI", width=90, anchor="center")
+        self.tabla_turnos.column("Paciente", width=130, anchor="w")
+        self.tabla_turnos.column("Tratamiento", width=120, anchor="w")
         self.tabla_turnos.grid(row=5, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
 
-        ttk.Button(frame, text="Cancelar Turno Seleccionado", command=self.cancelarTurno).grid(row=6, column=0, columnspan=3, pady=5)
+        # Evento de selección
+        self.tabla_turnos.bind("<<TreeviewSelect>>", self.seleccionarTurno)
 
+        # Refrescar tratamientos al cambiar de pestaña
         self.notebook.bind("<<NotebookTabChanged>>", lambda e: self._cargar_desplegable_tratamientos())
 
-    def _cargar_desplegable_tratamientos(self):
-        self.lista_cache_tratamientos = Tratamiento.obtenerTodos()
-        self.cboTratamientos['values'] = [t.nombre for t in self.lista_cache_tratamientos]
+        self._cargar_desplegable_tratamientos()
 
+    def seleccionarTurno(self, event):
+        seleccion = self.tabla_turnos.selection()
+        if not seleccion:
+            return
+        valores = self.tabla_turnos.item(seleccion[0], "values")
+
+        if len(valores) < 5:
+            messagebox.showerror("Error", "Los datos del turno están incompletos.")
+            return
+
+        # Hora
+        self.txtHora.delete(0, tk.END)
+        self.txtHora.insert(0, valores[1])
+
+        # DNI
+        self.txtTurnoDni.delete(0, tk.END)
+        self.txtTurnoDni.insert(0, valores[2])
+
+        # Tratamiento
+        nombre_tratamiento = valores[4]
+        if nombre_tratamiento in self.cboTratamientos['values']:
+            self.cboTratamientos.set(nombre_tratamiento)
+
+        # Guardar ID
+        self.turno_seleccionado_id = valores[0]
+
+    
     def agendarTurno(self):
-        # 1. Buscamos el paciente usando el DNI
         paciente = Paciente.buscarPorDni(self.txtTurnoDni.get())
-        
-        # 2. Obtenemos la posición elegida en el combobox de tratamientos
         seleccion = self.cboTratamientos.current()
 
-        # Validaciones de seguridad
         if not paciente:
             messagebox.showerror("Error", "Primero debe dar de alta al paciente con ese DNI.")
             return
@@ -157,55 +221,80 @@ class FormularioOdontologico(tk.Tk):
             messagebox.showerror("Error", "Debe seleccionar un tratamiento de la lista.")
             return
 
-        # 3. Traemos el objeto del tratamiento de la lista guardada
         tratamiento_seleccionado = self.lista_cache_tratamientos[seleccion]
-        
-
-        # Pedimos la fecha al objeto 'calendario'
-        fecha_turno = self.calendario.get_date() 
+        fecha_turno = self.calendario.get_date()
         hora_turno = self.txtHora.get()
-        
-        # 4. Instanciamos la clase Turno 
+
         t = Turno(fecha_turno, hora_turno, paciente.id, tratamiento_seleccionado.id)
-        
-        # 5. Guardamos en SQLite y refrescamos la grilla
+
         if t.agendar():
             messagebox.showinfo("Éxito", "Turno cargado correctamente.")
-            self.consultarAgendaDiaria() 
+            self.consultarAgendaDiaria()
         else:
             messagebox.showerror("Error", "No se pudo agendar el turno en la base de datos.")
 
+    def modificarTurno(self):
+        if not hasattr(self, "turno_seleccionado_id"):
+            messagebox.showwarning("Atención", "Seleccione un turno primero.")
+            return
+        paciente = Paciente.buscarPorDni(self.txtTurnoDni.get())
+        seleccion = self.cboTratamientos.current()
+        if not paciente or seleccion == -1:
+            messagebox.showerror("Error", "Debe seleccionar paciente y tratamiento válidos.")
+            return
+        tratamiento_seleccionado = self.lista_cache_tratamientos[seleccion]
+        t = Turno(self.calendario.get_date(), self.txtHora.get(), paciente.id, tratamiento_seleccionado.id, id=self.turno_seleccionado_id)
+        if t.actualizar():
+            messagebox.showinfo("Éxito", "Turno actualizado.")
+            self.consultarAgendaDiaria()
+        else:
+            messagebox.showerror("Error", "No se pudo actualizar el turno.")
+
+    def eliminarTurno(self):
+        if not hasattr(self, "turno_seleccionado_id"):
+            messagebox.showwarning("Atención", "Seleccione un turno primero.")
+            return
+        t = Turno("", "", 0, 0, id=self.turno_seleccionado_id)
+        if messagebox.askyesno("Confirmar", "¿Está seguro de eliminar este turno?"):
+            if t.cancelar():
+                messagebox.showinfo("Éxito", "Turno eliminado.")
+                self.consultarAgendaDiaria()
+            else:
+                messagebox.showerror("Error", "No se pudo eliminar el turno.")
 
     def consultarAgendaDiaria(self):
         for elemento in self.tabla_turnos.get_children():
             self.tabla_turnos.delete(elemento)
 
-        turnos = Turno.obtenerAgendaDiaria(self.calendario.get_date())
+        fecha = self.calendario.get_date()
+        turnos = Turno.obtenerAgendaDiaria(fecha)
         if not turnos:
-            messagebox.showinfo("Agenda", f"No hay turnos reservados para {self.calendario.get_date()}")
-            return
-
-        for fila in turnos:
-            # SELECT devuelve: (id, fecha, hora, nombre_paciente, nombre_tratamiento)
-            self.tabla_turnos.insert("", "end", values=(fila[0], fila[2], fila[3], fila[4]))
-
-    def cancelarTurno(self):
-        seleccion = self.tabla_turnos.selection()
-        if not seleccion:
-            messagebox.showwarning("Atención", "Por favor, seleccione un turno de la grilla.")
-            return
-
-        valores = self.tabla_turnos.item(seleccion[0], "values")
-        id_turno = valores[0]
-
-        t = Turno("", "", 0, 0, id=id_turno)
-        if t.cancelar():
-            messagebox.showinfo("Éxito", "Turno cancelado de manera correcta.")
-            self.consultarAgendaDiaria()
+            messagebox.showinfo("Agenda", f"No hay turnos reservados para {fecha}")
         else:
-            messagebox.showerror("Error", "No se pudo procesar la cancelación.")
+            for fila in turnos:
+                self.tabla_turnos.insert("", "end", values=(fila[0], fila[2], fila[3], fila[4], fila[5]))
+        
+        self.marcarDiasConTurnos()
+        self._cargar_desplegable_tratamientos()
 
-    # --- TRATAMIENTOS ---
+    def _cargar_desplegable_tratamientos(self):
+        registros = Tratamiento.obtenerTodos()  # devuelve tuplas (id, nombre, precio)
+        self.lista_cache_tratamientos = [Tratamiento(nombre, precio, id) for (id, nombre, precio) in registros]
+        self.cboTratamientos['values'] = [t.nombre for t in self.lista_cache_tratamientos]
+
+    def marcarDiasConTurnos(self):
+        """Colorea en verde los días que tienen turnos."""
+        self.calendario.calevent_remove('all')
+        sql = "SELECT DISTINCT fecha FROM turnos"
+        fechas = db.ejecutarConsulta(sql)
+        for fila in fechas:
+            fecha_str = fila[0]
+            # Convertir string a date
+            fecha_dt = datetime.strptime(fecha_str, "%Y-%m-%d").date()
+            self.calendario.calevent_create(fecha_dt, "Turnos", "turno")
+        self.calendario.tag_config("turno", background="lightgreen", foreground="black")
+
+        # --- TRATAMIENTOS ---
     def _inicializar_modulo_tratamientos(self):
         frame = self.pestana_tratamientos
         for i in range(2):
@@ -219,7 +308,28 @@ class FormularioOdontologico(tk.Tk):
         self.txtTratPrecio = ttk.Entry(frame, justify="center")
         self.txtTratPrecio.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
 
-        ttk.Button(frame, text="Agregar Tratamiento", command=self.gestionarTratamientos).grid(row=2, column=0, columnspan=2, pady=10)
+        # --- Frame para los botones en la misma fila ---
+        f_botones = ttk.Frame(frame)
+        f_botones.grid(row=2, column=0, columnspan=2, pady=10)
+
+        ttk.Button(f_botones, text="Agregar", command=self.gestionarTratamientos).pack(side="left", padx=5)
+        ttk.Button(f_botones, text="Modificar", command=self.modificarTratamiento).pack(side="left", padx=5)
+        ttk.Button(f_botones, text="Eliminar", command=self.eliminarTratamiento).pack(side="left", padx=5)
+
+        # --- Tabla de tratamientos ---
+        self.tabla_tratamientos = ttk.Treeview(frame, columns=("ID", "Nombre", "Precio"), show="headings", height=7)
+        self.tabla_tratamientos.heading("ID", text="ID")
+        self.tabla_tratamientos.column("ID", anchor="center", width=50)
+        self.tabla_tratamientos.heading("Nombre", text="Nombre")
+        self.tabla_tratamientos.column("Nombre", anchor="center", width=150)
+        self.tabla_tratamientos.heading("Precio", text="Precio")
+        self.tabla_tratamientos.column("Precio", anchor="center", width=100)
+        self.tabla_tratamientos.grid(row=3, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+
+        # Evento de selección
+        self.tabla_tratamientos.bind("<<TreeviewSelect>>", self.seleccionarTratamiento)
+
+        ttk.Button(frame, text="Ver todos los tratamientos", command=self.mostrarTratamientos).grid(row=4, column=0, columnspan=2, pady=5)
 
     def gestionarTratamientos(self):
         """Alta de nuevos tratamientos validando el tipo de dato."""
@@ -232,7 +342,63 @@ class FormularioOdontologico(tk.Tk):
                 self.txtTratNombre.delete(0, tk.END)
                 self.txtTratPrecio.delete(0, tk.END)
                 self._cargar_desplegable_tratamientos()
+                self.mostrarTratamientos()
             else:
-                messagebox.showerror("Error", "No se pudo guardar el tratamiento.")
+                messagebox.showerror("Error", "El tratamiento ya existe o no se pudo guardar.")
         except ValueError:
             messagebox.showerror("Error", "El precio ingresado debe ser un número válido.")
+
+    def mostrarTratamientos(self):
+        for elemento in self.tabla_tratamientos.get_children():
+            self.tabla_tratamientos.delete(elemento)
+
+        tratamientos = Tratamiento.obtenerTodos()
+        if not tratamientos:
+            messagebox.showinfo("Tratamientos", "No hay tratamientos registrados.")
+            return
+
+        for fila in tratamientos:
+            self.tabla_tratamientos.insert("", "end", values=fila)
+
+    def seleccionarTratamiento(self, event):
+        """Carga los datos del tratamiento seleccionado en los Entry."""
+        seleccion = self.tabla_tratamientos.selection()
+        if not seleccion:
+            return
+        valores = self.tabla_tratamientos.item(seleccion[0], "values")
+        self.txtTratNombre.delete(0, tk.END)
+        self.txtTratNombre.insert(0, valores[1])
+        self.txtTratPrecio.delete(0, tk.END)
+        self.txtTratPrecio.insert(0, valores[2])
+        self.tratamiento_seleccionado_id = valores[0]
+
+    def modificarTratamiento(self):
+        """Actualiza el tratamiento seleccionado."""
+        if not hasattr(self, "tratamiento_seleccionado_id"):
+            messagebox.showwarning("Atención", "Seleccione un tratamiento primero.")
+            return
+        try:
+            t = Tratamiento(self.txtTratNombre.get(), float(self.txtTratPrecio.get()), id=self.tratamiento_seleccionado_id)
+            if t.actualizar():
+                messagebox.showinfo("Éxito", "Tratamiento actualizado.")
+                self.mostrarTratamientos()
+            else:
+                messagebox.showerror("Error", "No se pudo actualizar el tratamiento.")
+        except ValueError:
+            messagebox.showerror("Error", "El precio ingresado debe ser un número válido.")
+
+    def eliminarTratamiento(self):
+        """Elimina el tratamiento seleccionado."""
+        if not hasattr(self, "tratamiento_seleccionado_id"):
+            messagebox.showwarning("Atención", "Seleccione un tratamiento primero.")
+            return
+        t = Tratamiento("", 0, id=self.tratamiento_seleccionado_id)
+        if messagebox.askyesno("Confirmar", "¿Está seguro de eliminar este tratamiento?"):
+            if t.eliminar():
+                messagebox.showinfo("Éxito", "Tratamiento eliminado.")
+                self.mostrarTratamientos()
+                self.txtTratNombre.delete(0, tk.END)
+                self.txtTratPrecio.delete(0, tk.END)
+            else:
+                messagebox.showerror("Error", "No se pudo eliminar el tratamiento.")
+
